@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Shelter sign Up</title>
+	<style>
+		body {
+			background-color: #C95445;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			margin: 0;
+		}
+
+		form {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 10px;
+			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+		}
+
+		input[type="text"], input[type="password"] {
+			padding: 5px;
+			margin: 10px;
+			width: 200px;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+		}
+
+		button {
+			padding: 10px 20px;
+			background-color: #C95445;
+			color: #fff;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: #BE5547;
+		}
+
+		#error-message {
+			color: #fff;
+			margin-top: 10px;
+		}
+
+		h1 {
+			color: #fff;
+			font-size: 36px;
+			margin-bottom: 20px;
+			text-align: center;
+		}
+
+        
+
+	</style>
+	<script src="https://smtpjs.com/v3/smtp.js"></script>
+</head>
+<body>
+	<div id="app">
+		<h1>The Shelter </h1>
+		<h2>Sign Up and connect with your fellow terps</h2>
+		<form v-if="!verificationCodeInputVisible && !signInFormVisible" @submit.prevent="sendAuthCode">
+		  <p>Please enter your Terpmail address:</p>
+		  <input type="text" v-model="emailInput">
+		  <button type="submit">Sign Up</button>
+		</form>
+		<form v-if="verificationCodeInputVisible && !createAccountFormVisible">
+			<p>Please enter the verification code sent to your email:</p>
+			<input type="text" v-model="verificationCodeInput">
+			<button type="button" @click="verifyAuthCode">Verify Code</button>
+		  </form>
+		  <form v-if="createAccountFormVisible">
+			<p>Please enter a name for your account:</p>
+			<input type="text" v-model="nameInput">
+			<p>Please enter a password:</p>
+			<input type="password" v-model="passwordInput">
+			<button type="button" @click="createAccount">Create Account</button>
+		  </form>
+		<p v-if="errorMessage">{{errorMessage}}</p>
+		<br>
+		<form v-if="signInFormVisible" @submit.prevent="signIn">
+		  <p>Please enter your Terpmail address:</p>
+		  <input type="text" v-model="signInEmailInput">
+		  <p>Please enter your password:</p>
+		  <input type="password" v-model="signInPasswordInput">
+		  <button type="submit">Sign In</button>
+		</form>
+		<br>
+		
+		<button v-if="!verificationCodeInputVisible && !signInFormVisible" type="button" @click="showSignInForm">Sign In</button>
+		<button v-if="!verificationCodeInputVisible && signInFormVisible" type="button" @click="showSignUpForm">Sign Up</button>
+	  </div>
+
+	  <script src="https://unpkg.com/vue@next"></script>
+<script>
+  const umdEmailRegex = /.*@terpmail\.umd\.edu$/;
+
+  const app = Vue.createApp({
+  data() {
+    return {
+      emailInput: "",
+      signInEmailInput: "",
+      signInPasswordInput: "",
+      signInFormVisible: false,
+      errorMessage: "",
+      verificationCodeInput: "",
+      nameInput: "",
+      passwordInput: "",
+      verificationCodeInputVisible: false,
+      signUpFormVisible: false,
+      signUpErrorMessage: "",
+      authCode: null,
+      createAccountFormVisible: false, // Initialize to false
+    }
+  },
+
+  methods: {
+    sendAuthCode() {
+      if (umdEmailRegex.test(this.emailInput)) {
+        // Generate a random 6-digit code
+        this.authCode = 123;
+
+        // Send the code to the user's email address
+        Email.send({
+          SecureToken: "your_secure_token_here",
+          To: this.emailInput,
+          From: "your_email_address_here",
+          Subject: "Verification Code",
+          Body: `Your verification code is: ${this.authCode}`
+        }).then(
+          message => {
+            alert("An authentication code has been sent to your email address.");
+          }
+        );
+
+        // Display the verification code input field
+        this.verificationCodeInputVisible = true;
+      } else {
+        this.errorMessage = "Please enter a valid terpmail.umd.edu email address.";
+      }
+    },
+
+    verifyAuthCode() {
+      if (this.verificationCodeInput == this.authCode) {
+        // Show the sign-up form
+        this.createAccountFormVisible = true; // Set createAccountFormVisible to true
+      } else {
+        this.signUpErrorMessage = "Invalid verification code.";
+      }
+    },
+
+      verifyAuthCode() {
+        if (this.verificationCodeInput == this.authCode) {
+          // Show the sign-up form
+          this.createAccountFormVisible = true;
+        } else {
+          this.signUpErrorMessage = "Invalid verification code.";
+        }
+      },
+
+      createAccount() {
+        if (this.nameInput && this.passwordInput) {
+          // Store the user's credentials in a database
+          // Replace the placeholders with the actual values
+          const url = "your_database_url_here";
+          const username = this.emailInput.trim();
+          const password = this.passwordInput.trim();
+          const name = this.nameInput.trim();
+
+          fetch(url, {
+            method: "POST",
+            body: JSON.stringify({ username, password, name }),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }).then(
+            response => {
+              if (response.ok) {
+                this.verificationCodeInputVisible = false
+		        this.createAccountFormVisible = false;
+		        window.alert("You have successfully signed up \n Fellow terps !");
+		        this.signInFormVisible = true;
+
+			
+              } else {
+                this.signUpErrorMessage = "An error occurred while storing your credentials. Please try again later.";
+              }
+            }
+          );
+        } else {
+          this.signUpErrorMessage = "Please enter at least an 8 characters password.";
+        }
+		// to be removed 
+		this.verificationCodeInputVisible = false
+		this.createAccountFormVisible = false;
+		window.alert("You have successfully signed up \n Fellow terps !");
+		this.signInFormVisible = true;
+      },
+
+      showSignUpForm() {
+        this.signInFormVisible = false;
+        this.verificationCodeInputVisible = false;
+        this.signUpFormVisible = true;
+      },
+
+      showVerificationCodeInput() {
+        this.signInFormVisible = false;
+        this.verificationCodeInputVisible = true;
+      },
+
+      showSignInForm() {
+        this.signInFormVisible = true;
+        this.verificationCodeInputVisible = false;
+      }
+    }
+  });
+
+  app.mount("#app");
+</script>
